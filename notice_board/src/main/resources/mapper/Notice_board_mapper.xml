@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="Dao.Notice_board_interface">
+
+<select id="getPostList" resultType="Dto.Notice_board_dto">
+	<![CDATA[
+		select b.* from (select rownum end, a.* from (select rownum postno1, postno,title,id,hit,to_char(reg_date,'yyyy-mm-dd') reg_date from board where ${select} like '%${search}%' order by postno desc) a) b where b.end>=${start} and b.end <=${end}
+
+		]]>
+</select>
+
+<select id="paging" resultType="Integer">
+	select count(*) from board where ${select} like '%${search}%'
+</select>
+
+<insert id="notice_insert">
+	insert 
+		into login
+		(id,password)
+		values
+		('${id}','${pw}')
+</insert>
+
+<select id="getViewPost" resultType="Dto.Notice_board_dto">
+		select
+			postno,title,id,hit,to_char(reg_date,'yyyy-mm-dd') reg_date,content
+			from board
+			where postno=#{postno}
+</select>
+
+<select id="loginCheck" resultType="Integer">
+	select
+		count(*)
+		from login
+		where id=#{id} and password=#{password}
+</select>
+
+<insert id="postInsert">
+	insert 
+		into board
+		(postno,title,content,reg_date,id)
+		values 
+		(${postNo},'${title}','${content}','${reg_date}','${id}')
+</insert>
+
+<select id="getCheckId" resultType="Integer">
+	select
+		count(*)
+		from login
+		where id=#{id}
+</select>
+
+<select id="maxPostNo" resultType="integer">
+	select
+        count(
+		max(rownum)) from ((select rownum postno from board))
+        GROUP BY rownum
+</select>
+
+<select id="getMaxHit" resultType="integer">
+	select
+		max(hit)
+		from board
+		where
+		postno=#{postno}
+</select>
+
+<update id="hitUp" >
+	update 
+		board
+		set
+		hit = '${hit}'
+		where
+		postno = '${postno}'
+</update>
+
+<delete id="notice_delete">
+	delete from board where postno=#{postno}
+</delete>
+
+<select id="getMaxReplyNo" resultType="integer">
+	select
+		count(max(replyno))
+		from reply
+		GROUP by replyno
+</select>
+
+<insert id="replySave">
+	insert
+		 into reply (replyno,id,content,reg_date,postno,postreno)
+		 values
+	  	 (${replyno},'${id}','${content}',sysdate,${postno},${postreno})
+</insert>
+
+<select id="getPostReNo" resultType="integer">
+	select
+    count(max(postreno)) postreno
+		from reply
+		where
+		postno=#{postno}
+        GROUP by postreno
+</select>
+
+<update id="postUpdate">
+	update 
+		board 
+		set 
+		title='${title}', content='${content}', reg_date='${reg_date}', id='${id}' 
+		where 
+		postno='${postNo}'
+</update>
+
+<select id="getViewReply" resultType="Dto.Notice_board_dto">
+	select
+	   b.title,r.id,hit,r.postno,r.content content,to_char(r.reg_date,'yyyy-mm-dd') reg_date,r.postreno postreno
+				from board b left outer join reply r on b.postno=r.postno 
+	          where r.postno=#{postno}
+	          order by postreno desc
+</select>
+
+<delete id="redelete">
+	delete 
+	    from reply
+	    where postno='${postNo}' and postreno='${postReNo}'
+</delete>
+
+<update id="reupdate">
+	update 
+		reply 
+		set 
+		content='${content}', reg_date=sysdate
+		where 
+		postno='${postNo}' and postreno='${postReNo}'
+</update>
+</mapper>
